@@ -10,13 +10,12 @@ app = FastAPI()
 # Permitir solicitudes desde tu frontend (React en Vercel)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://frontend-pdf-app.vercel.app/"],  # En producción: cambiar "*" por tu dominio de Vercel
+    allow_origins=["https://frontend-pidief-app.vercel.app/"],  # En producción: cambiar "*" por tu dominio de Vercel
     allow_credentials=True,
-    allow_methods=["https://frontend-pdf-app.vercel.app/"],
-    allow_headers=["https://frontend-pdf-app.vercel.app/"],
+    allow_methods=["https://frontend-pidief-app.vercel.app/"],
+    allow_headers=["https://frontend-pidief-app.vercel.app/"],
 )
 
-@app.post("/unir-pdf/")
 
 @app.get("/")
 def root():
