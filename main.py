@@ -1,53 +1,44 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from typing import List
+from fastapi.responses import StreamingResponse
 from PyPDF2 import PdfMerger
-import os
-import uuid
+import io
 
+# Crear la app FastAPI
 app = FastAPI()
 
-# Permitir solicitudes desde tu frontend (React en Vercel)
+# Configurar CORS para permitir conexión desde tu frontend en Vercel
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://frontend-pidief-app.vercel.app/"],  # En producción: cambiar "*" por tu dominio de Vercel
+    allow_origins=["https://frontend-pidief-app.vercel.app"],  # 👈 tu dominio exacto
     allow_credentials=True,
-    allow_methods=["https://frontend-pidief-app.vercel.app/"],
-    allow_headers=["https://frontend-pidief-app.vercel.app/"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-
+# Ruta de prueba para confirmar que el backend funciona
 @app.get("/")
-def root():
+def home():
     return {"mensaje": "Backend de Pidief funcionando"}
 
+# Ruta POST para unir PDFs
 @app.post("/unir-pdf/")
-async def unir_pdfs(files: list[UploadFile] = File(...)):
-    """
-    Recibe múltiples archivos PDF, los une en uno solo y lo devuelve.
-    """
-
-    # Crear un nombre único para el PDF resultante
-    output_filename = f"{uuid.uuid4()}.pdf"
-
-    # Crear el combinador de PDFs
+async def unir_pdfs(files: List[UploadFile] = File(...)):
     merger = PdfMerger()
 
-    # Guardar temporalmente los archivos recibidos
     for file in files:
-        contents = await file.read()
-        temp_filename = f"temp_{file.filename}"
-        with open(temp_filename, "wb") as f:
-            f.write(contents)
-        merger.append(temp_filename)
+        contenido = await file.read()
+        merger.append(io.BytesIO(contenido))
 
-    # Guardar el PDF final
-    with open(output_filename, "wb") as f:
-        merger.write(f)
+    salida = io.BytesIO()
+    merger.write(salida)
+    merger.close()
+    salida.seek(0)
 
-    # Limpiar archivos temporales
-    for file in files:
-        os.remove(f"temp_{file.filename}")
-
-    # Devolver el PDF unido como archivo descargable
-    return FileResponse(output_filename, filename="pidief-unido.pdf", media_type="application/pdf")
+    # Responder con el PDF unido como descarga
+    return StreamingResponse(
+        salida,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=unido.pdf"},
+    )
