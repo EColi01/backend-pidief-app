@@ -13,8 +13,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://frontend-pidief-app.vercel.app"],  # 👈 tu dominio exacto
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["https://frontend-pidief-app.vercel.app"],
+    allow_headers=["https://frontend-pidief-app.vercel.app"],
 )
 
 # Ruta de prueba para confirmar que el backend funciona
