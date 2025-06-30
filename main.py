@@ -16,6 +16,8 @@ app.add_middleware(
     allow_headers=["https://frontend-pdf-app.vercel.app/"],
 )
 
+@app.post("/unir-pdf/")
+
 @app.get("/")
 def root():
     return {"mensaje": "Backend de Pidief funcionando"}
