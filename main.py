@@ -8,27 +8,27 @@ import io
 # Crear la app FastAPI
 app = FastAPI()
 
-# Configurar CORS para permitir conexión desde tu frontend en Vercel
+# Configurar CORS correctamente
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://frontend-pidief-app.vercel.app"],  # 👈 tu dominio exacto
+    allow_origins=["https://frontend-pidief-app.vercel.app"],  # Tu frontend en Vercel
     allow_credentials=True,
-    allow_methods=["https://frontend-pidief-app.vercel.app"],
-    allow_headers=["https://frontend-pidief-app.vercel.app"],
+    allow_methods=["*"],  # Permite todos los métodos: GET, POST, etc.
+    allow_headers=["*"],  # Permite todos los headers
 )
 
-# Ruta de prueba para confirmar que el backend funciona
+# Ruta de prueba para verificar que el backend está funcionando
 @app.get("/")
 def home():
     return {"mensaje": "Backend de Pidief funcionando"}
 
-# Ruta POST para unir PDFs
+# Ruta para unir múltiples archivos PDF
 @app.post("/unir-pdf/")
-async def unir_pdfs(files: List[UploadFile] = File(...)):
+async def unir_pdfs(archivos: List[UploadFile] = File(...)):
     merger = PdfMerger()
 
-    for file in files:
-        contenido = await file.read()
+    for archivo in archivos:
+        contenido = await archivo.read()
         merger.append(io.BytesIO(contenido))
 
     salida = io.BytesIO()
@@ -36,7 +36,6 @@ async def unir_pdfs(files: List[UploadFile] = File(...)):
     merger.close()
     salida.seek(0)
 
-    # Responder con el PDF unido como descarga
     return StreamingResponse(
         salida,
         media_type="application/pdf",
