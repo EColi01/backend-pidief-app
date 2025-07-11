@@ -5,39 +5,36 @@ from fastapi.responses import StreamingResponse
 from PyPDF2 import PdfMerger
 import io
 
-# Crear la app FastAPI
 app = FastAPI()
 
-# Configurar CORS correctamente
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://frontend-pidief-app.vercel.app"],  # Tu frontend en Vercel
+    allow_origins=["https://frontend-pidief-app.vercel.app"],
     allow_credentials=True,
-    allow_methods=["*"],  # Permite todos los métodos: GET, POST, etc.
-    allow_headers=["*"],  # Permite todos los headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# Ruta de prueba para verificar que el backend está funcionando
 @app.get("/")
 def home():
-    return {"mensaje": "Backend de Pidief funcionando"}
+    return {"message": "Servidor funcionando"}
 
-# Ruta para unir múltiples archivos PDF
 @app.post("/unir-pdf/")
-async def unir_pdfs(archivos: List[UploadFile] = File(...)):
+async def unir_pdfs(files: List[UploadFile] = File(...)):
     merger = PdfMerger()
 
-    for archivo in archivos:
-        contenido = await archivo.read()
-        merger.append(io.BytesIO(contenido))
+    for file in files:
+        contents = await file.read()
+        merger.append(io.BytesIO(contents))
 
-    salida = io.BytesIO()
-    merger.write(salida)
+    output = io.BytesIO()
+    merger.write(output)
     merger.close()
-    salida.seek(0)
+    output.seek(0)
 
     return StreamingResponse(
-        salida,
+        output,
         media_type="application/pdf",
         headers={"Content-Disposition": "attachment; filename=unido.pdf"},
     )
