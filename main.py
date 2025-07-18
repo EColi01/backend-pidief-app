@@ -72,3 +72,45 @@ async def unir_pdfs(
         media_type="application/pdf",
         headers={"Content-Disposition": "attachment; filename=unido.pdf"},
     )
+
+@app.post("/dividir-pdf/")
+async def dividir_pdf(
+    file: UploadFile = File(...),
+    selected_pages: str = Form(...)
+):
+    # Read the uploaded PDF
+    contents = await file.read()
+    pdf_bytes = io.BytesIO(contents)
+    reader = PdfReader(pdf_bytes)
+    
+    # Parse selected pages
+    try:
+        selected_pages_list = json.loads(selected_pages)
+    except:
+        selected_pages_list = []
+    
+    if not selected_pages_list:
+        return {"error": "No se seleccionaron páginas"}
+    
+    # Create a new PDF with only the selected pages
+    writer = PdfWriter()
+    
+    # Extract each selected page
+    for page_num in selected_pages_list:
+        # PyPDF2 uses 0-based indexing, but frontend likely uses 1-based indexing
+        page_index = int(page_num) - 1 if isinstance(page_num, (int, str)) else page_num
+        
+        if 0 <= page_index < len(reader.pages):
+            page = reader.pages[page_index]
+            writer.add_page(page)
+    
+    # Write the new PDF to a BytesIO object
+    output = io.BytesIO()
+    writer.write(output)
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=paginas_divididas.pdf"}
+    )
