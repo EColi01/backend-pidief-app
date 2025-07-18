@@ -11,7 +11,7 @@ app = FastAPI()
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://frontend-pidief-app.vercel.app"],
+    allow_origins=["https://frontend-pidief-app.vercel.app", "http://localhost:5173", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -76,18 +76,26 @@ async def unir_pdfs(
 @app.post("/dividir-pdf/")
 async def dividir_pdf(
     file: UploadFile = File(...),
-    selected_pages: str = Form(...)
+    selected_pages: str = Form(...),
+    rotations: str = Form(None)
 ):
     # Read the uploaded PDF
     contents = await file.read()
     pdf_bytes = io.BytesIO(contents)
     reader = PdfReader(pdf_bytes)
     
-    # Parse selected pages
+    # Parse selected pages and rotations
     try:
         selected_pages_list = json.loads(selected_pages)
     except:
         selected_pages_list = []
+    
+    rotation_values = {}
+    if rotations:
+        try:
+            rotation_values = json.loads(rotations)
+        except:
+            pass
     
     if not selected_pages_list:
         return {"error": "No se seleccionaron páginas"}
@@ -102,6 +110,13 @@ async def dividir_pdf(
         
         if 0 <= page_index < len(reader.pages):
             page = reader.pages[page_index]
+            
+            # Apply rotation if specified
+            page_id = str(page_num)
+            if page_id in rotation_values and rotation_values[page_id] != 0:
+                rotation_angle = rotation_values[page_id]
+                page.rotate(rotation_angle)
+                
             writer.add_page(page)
     
     # Write the new PDF to a BytesIO object
